@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Briker Labour">
+<title>Briker Labour Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#F7F6F3;--surface:#FFFFFF;--surface2:#F2F0EC;
+  --border:#E0DDD8;--border2:#C8C5BE;
+  --text:#1A1917;--text2:#6B6860;--text3:#9B9890;
+  --blue:#185FA5;--blue-light:#E6F1FB;--blue-dark:#0C447C;
+  --green:#3B6D11;--green-light:#EAF3DE;
+  --red:#A32D2D;--red-light:#FCEBEB;
+  --amber:#BA7517;--amber-light:#FAEEDA;
+  --radius:12px;--radius-sm:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+.app{max-width:520px;margin:0 auto;padding:20px 16px 60px}
+.screen{display:none}.screen.active{display:block}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.logo-mark{width:38px;height:38px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-mark svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.logo-name{font-size:17px;font-weight:700;letter-spacing:-0.03em}
+.logo-sub{font-size:12px;color:var(--text2);margin-top:1px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.lbl{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px}
+select,input[type=text],input[type=number],input[type=password],input[type=date]{
+  width:100%;padding:11px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);
+  font-size:15px;color:var(--text);background:var(--surface2);
+  -webkit-appearance:none;appearance:none;margin-bottom:12px;outline:none;
+}
+select:focus,input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,0.12)}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:13px 18px;
+  border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:15px;font-weight:600;
+  cursor:pointer;background:var(--surface);color:var(--text);width:100%;margin-top:4px}
+.btn:active{transform:scale(0.97)}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-sm{padding:8px 14px;font-size:13px;width:auto;margin-top:0;font-weight:500}
+.btn-ghost{background:transparent;border:none;color:var(--blue);font-size:13px;padding:6px 0;width:auto;cursor:pointer}
+.status{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;margin-bottom:16px}
+.status.ok{background:var(--green-light);color:var(--green)}
+.status.off{background:var(--amber-light);color:var(--amber)}
+.status.err{background:var(--red-light);color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ok .dot{background:var(--green)}.off .dot{background:var(--amber)}.err .dot{background:var(--red)}
+.time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:8px 0 14px}
+.tb{padding:7px 4px;border:1px solid var(--border);border-radius:6px;font-size:11px;text-align:center;
+  cursor:pointer;background:var(--surface2);color:var(--text2);user-select:none;font-weight:500}
+.tb:hover{background:var(--blue-light);color:var(--blue);border-color:var(--blue)}
+.tb.sel-start{background:#B5D4F4;color:var(--blue-dark);border-color:var(--blue)}
+.tb.sel-range{background:var(--blue);color:#fff;border-color:var(--blue)}
+.tb.done{background:var(--green-light);color:var(--green);border-color:#97C459;cursor:default}
+.tb.done:hover{background:var(--green-light);color:var(--green)}
+.tinfo{font-size:13px;color:var(--text2);min-height:20px;margin-bottom:8px;font-weight:500}
+.phases{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.pp{padding:8px 14px;border:1px solid var(--border2);border-radius:20px;font-size:13px;font-weight:500;
+  cursor:pointer;background:var(--surface2);color:var(--text)}
+.pp:hover{border-color:var(--blue);color:var(--blue)}
+.pp.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto}
+.tab{padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);
+  border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;flex-shrink:0}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tc{display:none}.tc.active{display:block}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.stat{background:var(--surface2);border-radius:var(--radius-sm);padding:12px;text-align:center}
+.stat-v{font-size:22px;font-weight:700;color:var(--text)}
+.stat-l{font-size:11px;color:var(--text2);margin-top:2px}
+.prog-wrap{height:6px;background:var(--border);border-radius:3px;margin-top:6px;overflow:hidden}
+.prog{height:100%;border-radius:3px;background:var(--blue)}
+.prog.over{background:var(--red)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);font-size:12px}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.b-blue{background:var(--blue-light);color:var(--blue)}
+.b-amber{background:var(--amber-light);color:var(--amber)}
+.back{font-size:13px;color:var(--blue);cursor:pointer;margin-bottom:16px;display:inline-flex;align-items:center;gap:4px;font-weight:500;background:none;border:none}
+.alert{padding:11px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:12px;font-weight:500}
+.a-ok{background:var(--green-light);color:var(--green)}
+.a-err{background:var(--red-light);color:var(--red)}
+.a-warn{background:var(--amber-light);color:var(--amber)}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:20px;padding:5px 10px;font-size:12px;margin:3px}
+.chip-x{cursor:pointer;color:var(--text3);font-size:16px;line-height:1}
+.chip-x:hover{color:var(--red)}
+.ir{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.ir input{margin-bottom:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.row2 input{margin-bottom:0}
+.sec{font-size:15px;font-weight:700;margin-bottom:12px}
+.empty{text-align:center;padding:32px;color:var(--text3);font-size:13px}
+.divider{height:1px;background:var(--border);margin:14px 0}
+.note{font-size:12px;color:var(--text3);margin-top:6px;line-height:1.5}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:sp 0.7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:40px;color:var(--text2);font-size:14px}
+@media(max-width:400px){.stats{grid-template-columns:repeat(2,1fr)}.time-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HOME -->
+<div id="s-home" class="screen active">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 20 20"><polyline points="2,14 6,8 10,11 14,5 18,9"/><line x1="2" y1="18" x2="18" y2="18"/></svg></div>
+    <div><div class="logo-name">Briker Contracting</div><div class="logo-sub">Labour Tracker</div></div>
+  </div>
+  <div class="status ok" id="home-status"><div class="dot"></div><span id="home-status-txt">Connecting...</span></div>
+  <div class="card">
+    <div class="lbl">Who's logging today?</div>
+    <select id="emp-sel"><option value="">— Select your name —</option></select>
+    <div class="lbl">Select job</div>
+    <select id="job-sel"><option value="">— Select job —</option></select>
+    <button class="btn btn-primary" onclick="startEntry()">Start logging</button>
+  </div>
+  <div style="text-align:center;margin-top:8px">
+    <button class="btn-ghost" onclick="goAdmin()">Admin access →</button>
+  </div>
+</div>
+
+<!-- ENTRY -->
+<div id="s-entry" class="screen">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 20 20"><polyline points="2,14 6,8 10,11 14,5 18,9"/><line x1="2" y1="18" x2="18" y2="18"/></svg></div>
+    <div><div class="logo-name">Briker Contracting</div><div class="logo-sub">Labour Tracker</div></div>
+  </div>
+  <div class="status ok" id="entry-status"><div class="dot"></div><span id="entry-status-txt">Connected</span></div>
+  <button class="back" onclick="show('s-home')">← Back</button>
+  <h2 id="entry-job" style="font-size:18px;font-weight:700;margin-bottom:4px"></h2>
+  <p id="entry-who" style="font-size:13px;color:var(--text2);margin-bottom:12px"></p>
+  <div class="card">
+    <div class="lbl">Date</div>
+    <input type="date" id="entry-date" onchange="onDateChange()">
+    <div class="lbl">Select time — tap start then tap end</div>
+    <div class="tinfo" id="tinfo">Tap a block to start</div>
+    <div class="time-grid" id="tgrid"></div>
+    <div id="alert-box"></div>
+    <div id="daily-total" style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:10px;min-height:18px"></div>
+    <div class="lbl">Select phase</div>
+    <div class="phases" id="phase-area"></div>
+    <div class="lbl">Entry type</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <div id="type-work" class="pp active" style="flex:1;text-align:center" onclick="setType('work')">Work</div>
+      <div id="type-break" class="pp" style="flex:1;text-align:center" onclick="setType('break')">Unpaid Break</div>
+      <div id="type-travel" class="pp" style="flex:1;text-align:center" onclick="setType('travel')">Travel</div>
+    </div>
+    <div class="lbl">Notes (optional)</div>
+    <input type="text" id="notes-in" placeholder="e.g. poured east footing, weather delay">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <input type="checkbox" id="weather-delay" style="width:auto;margin-bottom:0;padding:0;accent-color:var(--blue)">
+      <label for="weather-delay" style="font-size:13px;color:var(--text2);font-weight:500">Weather delay</label>
+    </div>
+    <button class="btn btn-primary" id="submit-btn" onclick="submitEntry()">Submit hours</button>
+  </div>
+</div>
+
+<!-- PIN -->
+<div id="s-pin" class="screen">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 20 20"><polyline points="2,14 6,8 10,11 14,5 18,9"/><line x1="2" y1="18" x2="18" y2="18"/></svg></div>
+    <div><div class="logo-name">Briker Contracting</div><div class="logo-sub">Admin Access</div></div>
+  </div>
+  <button class="back" onclick="show('s-home')">← Back</button>
+  <div class="card">
+    <div class="lbl">Admin PIN</div>
+    <input type="password" id="pin-in" placeholder="Enter PIN" onkeydown="if(event.key==='Enter')checkPin()">
+    <button class="btn btn-primary" onclick="checkPin()">Enter admin</button>
+    <div id="pin-err" style="color:var(--red);font-size:13px;margin-top:8px;display:none">Incorrect PIN</div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="s-admin" class="screen">
+  <div class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 20 20"><polyline points="2,14 6,8 10,11 14,5 18,9"/><line x1="2" y1="18" x2="18" y2="18"/></svg></div>
+    <div><div class="logo-name">Briker Contracting</div><div class="logo-sub">Admin Dashboard</div></div>
+  </div>
+  <div class="status ok" id="admin-status"><div class="dot"></div><span id="admin-status-txt">Connected</span></div>
+  <button class="back" onclick="show('s-home')">← Employee view</button>
+  <div class="tabs">
+    <div class="tab active" onclick="tab('overview')">Overview</div>
+    <div class="tab" onclick="tab('jobs')">Jobs</div>
+    <div class="tab" onclick="tab('employees')">Employees</div>
+    <div class="tab" onclick="tab('log')">Log</div>
+    <div class="tab" onclick="tab('export')">Export</div>
+  </div>
+  <div id="tc-overview" class="tc active"></div>
+  <div id="tc-jobs" class="tc"></div>
+  <div id="tc-employees" class="tc"></div>
+  <div id="tc-log" class="tc"></div>
+  <div id="tc-export" class="tc"></div>
+</div>
+
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+// ── FIREBASE CONFIG ─────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey: "AIzaSyDMUQ9IfjGnJHzun7jF1eYfgETznxCC2Ug",
+  authDomain: "briker-labour-tracker.firebaseapp.com",
+  projectId: "briker-labour-tracker",
+  storageBucket: "briker-labour-tracker.firebasestorage.app",
+  messagingSenderId: "977725568508",
+  appId: "1:977725568508:web:08c94e1521302064846e79"
+});
+const db = firebase.firestore();
+
+// ── CONSTANTS ───────────────────────────────────────────────────
+const QUEUE_KEY = "blt_queue_fb";
+const META_KEY  = "blt_meta_fb";
+const DEFAULT_PIN = "1234";
+const VHBC_PHASES = [
+  {id:"p1",name:"Pre-Construction",budget:4,contractVal:450},
+  {id:"p2",name:"Demolition & Prep",budget:72,contractVal:7220},
+  {id:"p3",name:"Framing",budget:40,contractVal:5440},
+  {id:"p4",name:"Insulation",budget:8,contractVal:680},
+  {id:"p5",name:"Drywall",budget:32,contractVal:5250},
+  {id:"p6",name:"Painting",budget:32,contractVal:5250},
+  {id:"p7",name:"Electrical",budget:16,contractVal:2500},
+  {id:"p8",name:"Plumbing",budget:12,contractVal:2000},
+  {id:"p9",name:"Drop Ceiling",budget:40,contractVal:6300},
+  {id:"p10",name:"Flooring",budget:36,contractVal:5580},
+  {id:"p11",name:"Doors",budget:12,contractVal:1360},
+  {id:"p12",name:"Kitchen Install",budget:20,contractVal:2720},
+  {id:"p13",name:"Trim",budget:20,contractVal:2720},
+  {id:"p14",name:"Clean Up",budget:12,contractVal:1360}
+];
+
+// ── STATE ───────────────────────────────────────────────────────
+let DB = { employees:[], jobs:[], entries:[] };
+let E  = { emp:"", job:null, phase:null, s:null, end:null, going:false, type:'work' };
+let online = navigator.onLine;
+let queue  = [];
+let currentTab = "overview";
+
+try { queue = JSON.parse(localStorage.getItem(QUEUE_KEY)||"[]"); } catch(e) { queue=[]; }
+
+// ── UTILS ───────────────────────────────────────────────────────
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function today(){ return new Date().toISOString().split("T")[0]; }
+
+function tLabel(i){
+  const h=Math.floor(i/2)+6, m=i%2===0?"00":"30";
+  const h12=h>12?h-12:(h===0?12:h), ap=h<12?"am":"pm";
+  return h12+":"+m+ap;
+}
+
+function sumH(arr){ return arr.reduce((s,e)=>s+(parseFloat(e.hrs)||0),0); }
+
+function getPin(){
+  try{ return JSON.parse(localStorage.getItem(META_KEY)||"{}").pin||DEFAULT_PIN; }
+  catch(e){ return DEFAULT_PIN; }
+}
+
+function saveQueue(){ try{ localStorage.setItem(QUEUE_KEY,JSON.stringify(queue)); }catch(e){} }
+
+function setStatus(isOnline){
+  const q=queue.length;
+  ["home","entry","admin"].forEach(id=>{
+    const bar=document.getElementById(id+"-status");
+    const txt=document.getElementById(id+"-status-txt");
+    if(!bar||!txt) return;
+    bar.className="status "+(isOnline?"ok":"off");
+    txt.textContent=isOnline
+      ?(q?"Online — syncing "+q+" entries":"Connected")
+      :(q?"Offline — "+q+" queued":"Offline — entries save locally");
+  });
+}
+
+// ── FIRESTORE HELPERS ───────────────────────────────────────────
+async function fsGet(collection){
+  const snap = await db.collection(collection).get();
+  return snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+
+async function fsSet(collection, id, data){
+  await db.collection(collection).doc(id).set(data);
+}
+
+async function fsUpdate(collection, id, data){
+  await db.collection(collection).doc(id).update(data);
+}
+
+async function fsDelete(collection, id){
+  await db.collection(collection).doc(id).delete();
+}
+
+async function fsAdd(collection, data){
+  await db.collection(collection).doc(data.id).set(data);
+}
+
+// ── LOAD DATA ───────────────────────────────────────────────────
+async function loadAll(){
+  const [emps, jobs, entries] = await Promise.all([
+    fsGet("employees"),
+    fsGet("jobs"),
+    db.collection("entries").orderBy("ts","desc").limit(500).get().then(s=>s.docs.map(d=>({id:d.id,...d.data()})))
+  ]);
+  DB.employees = emps.map(e=>e.name).sort();
+  DB.jobs = jobs;
+  DB.entries = entries;
+  try{ localStorage.setItem("blt_cache", JSON.stringify(DB)); }catch(e){}
+}
+
+function loadCache(){
+  try{
+    const c=JSON.parse(localStorage.getItem("blt_cache")||"null");
+    if(c){ DB=c; return true; }
+  }catch(e){}
+  return false;
+}
+
+async function seed(){
+  if(!DB.employees.length){
+    await fsSet("employees","emp-brian",{name:"Brian"});
+    await fsSet("employees","emp-denis",{name:"Denis"});
+  }
+  if(!DB.jobs.length){
+    await fsSet("jobs","vhbc",{
+      id:"vhbc",name:"Vernon Home Building Centre",
+      client:"Vernon Home Building Centre",
+      phases:VHBC_PHASES
+    });
+  }
+}
+
+// ── OFFLINE QUEUE ───────────────────────────────────────────────
+async function syncQueue(){
+  if(!queue.length||!online) return;
+  const toSync=[...queue];
+  for(const op of toSync){
+    try{
+      if(op.type==="entry") await fsAdd("entries",op.data);
+      queue=queue.filter(q=>q.id!==op.id);
+      saveQueue();
+    } catch(e){ break; }
+  }
+  setStatus(online);
+}
+
+// ── HOME ────────────────────────────────────────────────────────
+function fillHome(){
+  const es=document.getElementById("emp-sel");
+  const js=document.getElementById("job-sel");
+  const ev=es.value, jv=js.value;
+  es.innerHTML='<option value="">— Select your name —</option>';
+  js.innerHTML='<option value="">— Select job —</option>';
+  DB.employees.forEach(n=>es.appendChild(new Option(n,n)));
+  DB.jobs.forEach(j=>js.appendChild(new Option(j.name,j.id)));
+  if(ev) es.value=ev;
+  if(jv) js.value=jv;
+}
+
+function startEntry(){
+  const emp=document.getElementById("emp-sel").value;
+  const jid=document.getElementById("job-sel").value;
+  if(!emp){ alert("Please select your name"); return; }
+  if(!jid){ alert("Please select a job"); return; }
+  const job=DB.jobs.find(j=>j.id===jid);
+  if(!job) return;
+  E={emp,job,phase:null,s:null,end:null,going:false};
+  document.getElementById("entry-job").textContent=job.name;
+  document.getElementById("entry-who").textContent="Logging as "+emp;
+  document.getElementById("entry-date").value=today();
+  document.getElementById("notes-in").value="";
+  document.getElementById("alert-box").innerHTML="";
+  document.getElementById("tinfo").textContent="Tap a block to start";
+  buildGrid(); buildPills();
+  setStatus(online);
+  show("s-entry");
+}
+
+// ── TIME GRID ───────────────────────────────────────────────────
+function getEntryDate(){ return document.getElementById("entry-date").value||today(); }
+
+function onDateChange(){
+  E.s=null; E.end=null; E.going=false;
+  document.getElementById("tinfo").textContent="Tap a block to start";
+  buildGrid();
+}
+
+function buildGrid(){
+  const g=document.getElementById("tgrid"); g.innerHTML="";
+  const td=getEntryDate(), done=new Set();
+  const all=[...DB.entries,...queue.filter(q=>q.type==="entry").map(q=>q.data)];
+  const breakBlocks=new Set();
+  all.filter(e=>e.job_id===E.job.id&&e.emp===E.emp&&e.date===td)
+     .forEach(e=>{ for(let i=e.start_block;i<=e.end_block;i++){ done.add(i); if(e.entry_type==="break") breakBlocks.add(i); } });
+  // Update daily total
+  const dayHrs=sumH(all.filter(e=>e.job_id===E.job.id&&e.emp===E.emp&&e.date===td));
+  const dtEl=document.getElementById("daily-total");
+  if(dtEl) dtEl.textContent=dayHrs>0?"Today's total: "+dayHrs.toFixed(1)+" hrs logged":"";
+  for(let i=0;i<28;i++){
+    const d=document.createElement("div");
+    const isBreak=breakBlocks.has(i);
+    d.className="tb"+(done.has(i)?" done":"");
+    if(isBreak) d.style.cssText="background:var(--amber-light);color:var(--amber);border-color:var(--amber)";
+    d.textContent=tLabel(i); d.dataset.i=i;
+    if(!done.has(i)) d.onclick=()=>clickBlock(i);
+    g.appendChild(d);
+  }
+}
+
+function clickBlock(i){
+  if(!E.going){
+    E.s=i; E.end=null; E.going=true;
+    hl(); document.getElementById("tinfo").textContent="Start: "+tLabel(i)+" — tap end time";
+  } else {
+    if(i<E.s){ E.s=i; hl(); document.getElementById("tinfo").textContent="Start: "+tLabel(i)+" — tap end time"; return; }
+    E.end=i; E.going=false;
+    hl(); document.getElementById("tinfo").textContent=tLabel(E.s)+" – "+tLabel(i+1)+" ("+((i-E.s)*0.5).toFixed(1)+" hrs)";
+  }
+}
+
+function hl(){
+  document.querySelectorAll(".tb:not(.done)").forEach(b=>{
+    const i=parseInt(b.dataset.i);
+    b.classList.remove("sel-start","sel-range");
+    if(E.s!==null&&E.end===null&&i===E.s) b.classList.add("sel-start");
+    if(E.s!==null&&E.end!==null&&i>=E.s&&i<=E.end) b.classList.add("sel-range");
+  });
+}
+
+function buildPills(){
+  const a=document.getElementById("phase-area"); a.innerHTML="";
+  (E.job.phases||[]).forEach(ph=>{
+    const d=document.createElement("div");
+    d.className="pp"; d.textContent=ph.name;
+    d.onclick=()=>{ E.phase=ph; document.querySelectorAll(".pp").forEach(p=>p.classList.remove("active")); d.classList.add("active"); };
+    a.appendChild(d);
+  });
+}
+
+function setType(t){
+  E.type=t;
+  ["work","break","travel"].forEach(x=>{
+    const el=document.getElementById("type-"+x);
+    if(el) el.classList.toggle("active",x===t);
+  });
+}
+
+async function submitEntry(){
+  const box=document.getElementById("alert-box");
+  const btn=document.getElementById("submit-btn");
+  if(E.s===null||E.end===null){ box.innerHTML='<div class="alert a-err">Please select a time range</div>'; return; }
+  if(!E.phase){ box.innerHTML='<div class="alert a-err">Please select a phase</div>'; return; }
+  const hrs=(E.end-E.s)*0.5;
+  const entry={
+    id:"e"+Date.now(), emp:E.emp,
+    job_id:E.job.id, job_name:E.job.name,
+    phase_id:E.phase.id, phase_name:E.phase.name,
+    start_block:E.s, end_block:E.end, hrs,
+    notes:document.getElementById("notes-in").value||"",
+    date:getEntryDate(), ts:Date.now(),
+    entry_type:E.type||"work",
+    weather_delay:document.getElementById("weather-delay")?document.getElementById("weather-delay").checked:false
+  };
+  btn.innerHTML='<span class="spin"></span> Saving...'; btn.disabled=true;
+  if(online){
+    try{
+      await fsAdd("entries",entry);
+      DB.entries.unshift(entry);
+      try{ localStorage.setItem("blt_cache",JSON.stringify(DB)); }catch(e){}
+      box.innerHTML='<div class="alert a-ok">✓ '+hrs.toFixed(1)+' hrs logged — '+E.phase.name+'</div>';
+    } catch(err){
+      queue.push({id:"q"+Date.now(),type:"entry",data:entry});
+      saveQueue(); DB.entries.unshift(entry);
+      box.innerHTML='<div class="alert a-warn">Saved offline — will sync when connected</div>';
+    }
+  } else {
+    queue.push({id:"q"+Date.now(),type:"entry",data:entry});
+    saveQueue(); DB.entries.unshift(entry);
+    box.innerHTML='<div class="alert a-warn">Saved offline — '+queue.length+' queued</div>';
+  }
+  setStatus(online);
+  E.s=null; E.end=null; E.phase=null; E.going=false;
+  document.querySelectorAll(".pp").forEach(p=>p.classList.remove("active"));
+  document.getElementById("notes-in").value="";
+  if(document.getElementById("weather-delay")) document.getElementById("weather-delay").checked=false;
+  E.type="work"; setType("work");
+  document.getElementById("tinfo").textContent="Tap a block to start";
+  buildGrid();
+  btn.innerHTML="Submit hours"; btn.disabled=false;
+  setTimeout(()=>box.innerHTML="",4000);
+}
+
+// ── ADMIN ───────────────────────────────────────────────────────
+function goAdmin(){ show("s-pin"); document.getElementById("pin-in").value=""; document.getElementById("pin-err").style.display="none"; }
+
+function checkPin(){
+  if(document.getElementById("pin-in").value===getPin()){
+    show("s-admin"); setStatus(online); renderTab("overview");
+  } else {
+    document.getElementById("pin-err").style.display="block";
+  }
+}
+
+function tab(name){
+  currentTab=name;
+  document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("active",["overview","jobs","employees","log","export"][i]===name));
+  document.querySelectorAll(".tc").forEach(tc=>tc.classList.remove("active"));
+  document.getElementById("tc-"+name).classList.add("active");
+  renderTab(name);
+}
+
+function renderTab(name){ ({overview:rOverview,jobs:rJobs,employees:rEmps,log:rLog,export:rExport})[name](); }
+
+function allEntries(){
+  return [...DB.entries,...queue.filter(q=>q.type==="entry").map(q=>({...q.data,_q:true}))];
+}
+
+// OVERVIEW
+function rOverview(){
+  const a=document.getElementById("tc-overview");
+  const td=today(), ae=allEntries();
+  const tot=sumH(ae).toFixed(1), tod=sumH(ae.filter(e=>e.date===td)).toFixed(1);
+  const aj=new Set(ae.map(e=>e.job_id)).size;
+  let h='<div class="stats">';
+  h+='<div class="stat"><div class="stat-v">'+tot+'</div><div class="stat-l">Total hrs</div></div>';
+  h+='<div class="stat"><div class="stat-v">'+tod+'</div><div class="stat-l">Today</div></div>';
+  h+='<div class="stat"><div class="stat-v">'+aj+'</div><div class="stat-l">Active jobs</div></div>';
+  h+='</div>';
+  // Overtime check
+  const otEmps=DB.employees.filter(emp=>{
+    const dayH=sumH(ae.filter(e=>e.emp===emp&&e.date===td&&e.entry_type!=="break"));
+    return dayH>8;
+  });
+  if(otEmps.length){
+    h+='<div class="alert a-err" style="margin-bottom:12px">⚠ Overtime today: '+otEmps.join(", ")+'</div>';
+  }
+  // Weekly overtime
+  const weekStart=new Date(); weekStart.setDate(weekStart.getDate()-weekStart.getDay());
+  const weekStr=weekStart.toISOString().split("T")[0];
+  const weekOT=DB.employees.filter(emp=>{
+    const wkH=sumH(ae.filter(e=>e.emp===emp&&e.date>=weekStr&&e.entry_type!=="break"));
+    return wkH>40;
+  });
+  if(weekOT.length){
+    h+='<div class="alert a-warn" style="margin-bottom:12px">⚠ Weekly OT (40+ hrs): '+weekOT.join(", ")+'</div>';
+  }
+  h+='<button class="btn" style="margin-bottom:16px" onclick="refreshAdmin()">↻ Refresh</button>';
+  // Daily crew summary
+  h+='<div class="sec">Today\'s crew</div>';
+  const todayEntries=ae.filter(e=>e.date===td);
+  if(!todayEntries.length){ h+='<div class="empty" style="padding:16px">No hours logged today</div>'; }
+  else{
+    h+='<div class="card" style="margin-bottom:16px"><table><thead><tr><th>Employee</th><th>Job</th><th style="text-align:right">Hrs</th><th>Type</th></tr></thead><tbody>';
+    DB.employees.forEach(emp=>{
+      const ee=todayEntries.filter(e=>e.emp===emp);
+      if(!ee.length) return;
+      const wkH=sumH(ee.filter(e=>e.entry_type!=="break"));
+      const bkH=sumH(ee.filter(e=>e.entry_type==="break"));
+      const tvH=sumH(ee.filter(e=>e.entry_type==="travel"));
+      const wd=ee.some(e=>e.weather_delay);
+      const jobs=[...new Set(ee.map(e=>e.job_name))].join(", ");
+      h+='<tr><td><strong>'+emp+'</strong>'+(wd?' <span class="badge b-amber">wx</span>':'')+'</td>';
+      h+='<td style="font-size:12px;color:var(--text2)">'+jobs+'</td>';
+      h+='<td style="text-align:right">'+(wkH>8?'<span style="color:var(--red);font-weight:700">':'')+wkH.toFixed(1)+(wkH>8?'</span>':'')+'</td>';
+      h+='<td style="font-size:11px;color:var(--text3)">'+(bkH>0?bkH.toFixed(1)+'h brk ':'')+( tvH>0?tvH.toFixed(1)+'h trvl':'')+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+  }
+  h+='<div class="sec">Hours by job</div>';
+  if(!DB.jobs.length){ h+='<div class="empty">No jobs yet — add in Jobs tab</div>'; }
+  DB.jobs.forEach(job=>{
+    const je=ae.filter(e=>e.job_id===job.id), jh=sumH(je);
+    const bud=(job.phases||[]).reduce((s,p)=>s+(parseFloat(p.budget)||0),0);
+    const pct=bud>0?Math.min(jh/bud*100,100):0, over=bud>0&&jh>bud;
+    h+='<div class="card">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
+    h+='<div><div style="font-weight:700;font-size:14px">'+job.name+'</div>';
+    if(job.client) h+='<div style="font-size:12px;color:var(--text2)">'+job.client+'</div>';
+    h+='</div><span class="badge b-blue">'+jh.toFixed(1)+' hrs</span></div>';
+    if(bud>0){
+      h+='<div style="font-size:12px;color:var(--text2);margin-bottom:4px">'+jh.toFixed(1)+' / '+bud+' budgeted · '+Math.round(pct)+'%'+(over?' <strong style="color:var(--red)">OVER</strong>':'')+'</div>';
+      h+='<div class="prog-wrap"><div class="prog'+(over?' over':'')+'" style="width:'+pct+'%"></div></div>';
+    }
+    const bp={};
+    je.forEach(e=>{ bp[e.phase_name]=(bp[e.phase_name]||0)+(parseFloat(e.hrs)||0); });
+    if(Object.keys(bp).length){
+      h+='<div class="divider"></div>';
+      h+='<table><thead><tr><th>Phase</th><th>Budget</th><th>Actual</th><th>+/-</th></tr></thead><tbody>';
+      (job.phases||[]).forEach(ph=>{
+        const act=bp[ph.name]||0; if(!act&&!ph.budget) return;
+        const v=ph.budget?ph.budget-act:null;
+        const vs=v!==null?(v>=0?'<span style="color:var(--green)">+'+v.toFixed(1)+'h</span>':'<span style="color:var(--red)">'+v.toFixed(1)+'h</span>'):'-';
+        h+='<tr><td>'+ph.name+'</td><td style="color:var(--text2)">'+(ph.budget||'-')+'h</td><td>'+act.toFixed(1)+'h</td><td>'+vs+'</td></tr>';
+      });
+      h+='</tbody></table>';
+    }
+    h+='</div>';
+  });
+  a.innerHTML=h;
+}
+
+async function refreshAdmin(){ await loadAll(); fillHome(); renderTab(currentTab); }
+
+// JOBS
+function rJobs(){
+  const a=document.getElementById("tc-jobs");
+  let h='<div class="sec">Add job</div><div class="card">';
+  h+='<div class="lbl">Job name</div><input type="text" id="nj-name" placeholder="e.g. Lytton Lot 25">';
+  h+='<div class="lbl">Client</div><input type="text" id="nj-client" placeholder="e.g. Built Prefab">';
+  h+='<button class="btn btn-primary btn-sm" onclick="addJob()">Add job</button></div>';
+  h+='<div class="sec" style="margin-top:16px">Jobs</div>';
+  if(!DB.jobs.length) h+='<div class="empty">No jobs yet</div>';
+  DB.jobs.forEach(job=>{
+    const jh=sumH(allEntries().filter(e=>e.job_id===job.id));
+    h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    h+='<div><div style="font-weight:700;font-size:14px">'+job.name+'</div>';
+    if(job.client) h+='<div style="font-size:12px;color:var(--text2)">'+job.client+'</div>';
+    h+='</div><div style="display:flex;gap:6px;align-items:center">';
+    h+='<span class="badge b-blue">'+jh.toFixed(1)+' hrs</span>';
+    h+='<button class="btn btn-sm btn-danger" onclick="delJob(\''+job.id+'\')">Delete</button></div></div>';
+    h+='<div class="lbl">Phases</div><div style="margin-bottom:10px">';
+    (job.phases||[]).forEach(ph=>{
+      h+='<span class="chip">'+ph.name+(ph.budget?' · '+ph.budget+'h':'')+(ph.contractVal?' · $'+Number(ph.contractVal).toLocaleString():'');
+      h+='<span class="chip-x" onclick="delPhase(\''+job.id+'\',\''+ph.id+'\')">×</span></span>';
+    });
+    h+='</div><div class="lbl">Add phase</div>';
+    h+='<input type="text" id="pn-'+job.id+'" placeholder="Phase name">';
+    h+='<div class="row2"><input type="number" id="pb-'+job.id+'" placeholder="Budget hrs"><input type="number" id="pc-'+job.id+'" placeholder="Contract $"></div>';
+    h+='<button class="btn btn-sm btn-primary" onclick="addPhase(\''+job.id+'\')">Add phase</button></div>';
+  });
+  a.innerHTML=h;
+}
+
+async function addJob(){
+  const name=document.getElementById("nj-name").value.trim();
+  const client=document.getElementById("nj-client").value.trim();
+  if(!name) return;
+  const job={id:"j"+Date.now(),name,client,phases:[]};
+  try{ await fsSet("jobs",job.id,job); } catch(e){ alert("Error saving job"); return; }
+  DB.jobs.push(job); fillHome(); rJobs();
+}
+
+async function delJob(id){
+  if(!confirm("Delete this job?")) return;
+  try{ await fsDelete("jobs",id); } catch(e){}
+  DB.jobs=DB.jobs.filter(j=>j.id!==id); fillHome(); rJobs();
+}
+
+async function addPhase(jid){
+  const job=DB.jobs.find(j=>j.id===jid);
+  const name=document.getElementById("pn-"+jid).value.trim();
+  const budget=parseFloat(document.getElementById("pb-"+jid).value)||0;
+  const contractVal=parseFloat(document.getElementById("pc-"+jid).value)||0;
+  if(!name||!job) return;
+  if(!job.phases) job.phases=[];
+  job.phases.push({id:"ph"+Date.now(),name,budget,contractVal});
+  try{ await fsUpdate("jobs",jid,{phases:job.phases}); } catch(e){}
+  rJobs();
+}
+
+async function delPhase(jid,pid){
+  const job=DB.jobs.find(j=>j.id===jid); if(!job) return;
+  job.phases=job.phases.filter(p=>p.id!==pid);
+  try{ await fsUpdate("jobs",jid,{phases:job.phases}); } catch(e){}
+  rJobs();
+}
+
+// EMPLOYEES
+function rEmps(){
+  const a=document.getElementById("tc-employees");
+  const td=today(), ae=allEntries();
+  let h='<div class="sec">Add employee</div><div class="card">';
+  h+='<div class="ir"><input type="text" id="new-emp" placeholder="Full name"><button class="btn btn-sm btn-primary" onclick="addEmp()">Add</button></div></div>';
+  h+='<div class="sec" style="margin-top:16px">Hours by employee</div>';
+  DB.employees.forEach(emp=>{
+    const ee=ae.filter(e=>e.emp===emp);
+    const tot=sumH(ee), tod=sumH(ee.filter(e=>e.date===td));
+    h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    h+='<div><div style="font-weight:700;font-size:14px">'+emp+'</div>';
+    h+='<div style="font-size:12px;color:var(--text2)">Today: '+tod.toFixed(1)+' hrs · Total: '+tot.toFixed(1)+' hrs</div></div>';
+    h+='<button class="btn btn-sm btn-danger" onclick="delEmp(\''+emp+'\')">Remove</button></div>';
+    const bp={};
+    ee.forEach(e=>{ const k=e.job_name+"||"+e.phase_name; bp[k]=(bp[k]||0)+(parseFloat(e.hrs)||0); });
+    if(Object.keys(bp).length){
+      h+='<table><thead><tr><th>Job</th><th>Phase</th><th style="text-align:right">Hrs</th></tr></thead><tbody>';
+      Object.entries(bp).forEach(([k,v])=>{ const[j,p]=k.split("||"); h+='<tr><td>'+j+'</td><td>'+p+'</td><td style="text-align:right">'+v.toFixed(1)+'</td></tr>'; });
+      h+='</tbody></table>';
+    }
+    h+='</div>';
+  });
+  a.innerHTML=h;
+}
+
+async function addEmp(){
+  const n=document.getElementById("new-emp").value.trim();
+  if(!n||DB.employees.includes(n)) return;
+  try{ await fsSet("employees","emp"+Date.now(),{name:n}); } catch(e){}
+  DB.employees.push(n); DB.employees.sort(); fillHome(); rEmps();
+}
+
+async function delEmp(n){
+  if(!confirm("Remove "+n+"?")) return;
+  try{
+    const snap=await db.collection("employees").where("name","==",n).get();
+    snap.docs.forEach(d=>d.ref.delete());
+  } catch(e){}
+  DB.employees=DB.employees.filter(e=>e!==n); fillHome(); rEmps();
+}
+
+// LOG
+function rLog(){
+  const a=document.getElementById("tc-log");
+  const sorted=allEntries().slice().sort((x,y)=>y.ts-x.ts);
+  let h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">';
+  h+='<div class="sec" style="margin-bottom:0">All entries ('+sorted.length+')</div>';
+  if(sorted.length) h+='<button class="btn btn-sm btn-danger" onclick="clearLog()">Clear all</button>';
+  h+='</div>';
+  if(!sorted.length){ h+='<div class="empty">No entries yet</div>'; }
+  else{
+    h+='<div style="overflow-x:auto"><table><thead><tr><th>Date</th><th>Employee</th><th>Phase</th><th style="text-align:right">Hrs</th><th>Type</th><th></th></tr></thead><tbody>';
+    sorted.slice(0,100).forEach(e=>{
+      h+='<tr><td>'+e.date+(e._q?' <span class="badge b-amber">queued</span>':'')+'</td>';
+      h+='<td>'+e.emp+'</td>';
+      h+='<td><div>'+e.phase_name+'</div><div style="font-size:11px;color:var(--text3)">'+e.job_name+'</div></td>';
+      h+='<td style="text-align:right">'+parseFloat(e.hrs).toFixed(1)+'</td>';
+      const et=e.entry_type||"work";
+    const etBadge=et==="break"?'<span class="badge b-amber">break</span>':et==="travel"?'<span class="badge b-blue">travel</span>':(e.weather_delay?'<span class="badge b-amber">wx delay</span>':'');
+    h+='<td>'+etBadge+'</td>';
+    h+='<td>'+(e._q?'':`<span style="cursor:pointer;color:var(--red);font-size:16px" onclick="delEntry('${e.id}')">×</span>`)+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    if(sorted.length>100) h+='<div style="font-size:12px;color:var(--text3);text-align:center;margin-top:8px">Showing 100 most recent</div>';
+  }
+  a.innerHTML=h;
+}
+
+async function delEntry(id){
+  if(!confirm("Delete this entry?")) return;
+  try{ await fsDelete("entries",id); } catch(e){}
+  DB.entries=DB.entries.filter(e=>e.id!==id); rLog(); rOverview();
+}
+
+async function clearLog(){
+  if(!confirm("Clear ALL entries? Cannot be undone.")) return;
+  try{
+    const snap=await db.collection("entries").get();
+    const batch=db.batch();
+    snap.docs.forEach(d=>batch.delete(d.ref));
+    await batch.commit();
+  } catch(e){}
+  DB.entries=[]; queue=queue.filter(q=>q.type!=="entry"); saveQueue(); rLog(); rOverview();
+}
+
+// EXPORT
+function rExport(){
+  const a=document.getElementById("tc-export");
+  let h='<div class="sec">Export CSV</div>';
+  h+='<div class="card"><div style="font-size:13px;color:var(--text2);margin-bottom:12px">Download all hours for QuickBooks Workforce or payroll.</div>';
+  h+='<button class="btn btn-primary" onclick="exportHours()">Download hours CSV</button>';
+  h+='<button class="btn" style="margin-top:8px" onclick="exportBudget()">Download budget summary CSV</button></div>';
+  h+='<div class="sec" style="margin-top:16px">Change admin PIN</div>';
+  h+='<div class="card"><div class="lbl">New PIN</div><input type="password" id="new-pin" placeholder="New PIN">';
+  h+='<div class="lbl">Confirm PIN</div><input type="password" id="conf-pin" placeholder="Confirm">';
+  h+='<button class="btn" onclick="changePin()">Update PIN</button>';
+  h+='<div id="pin-msg" style="font-size:13px;margin-top:8px"></div>';
+  h+='<div class="note">Default PIN is 1234 — change before sharing with crew.</div></div>';
+  a.innerHTML=h;
+}
+
+function exportHours(){
+  const ae=allEntries();
+  if(!ae.length){ alert("No entries to export"); return; }
+  const rows=[["Date","Employee","Job","Phase","Hours","Start","End","Type","Weather Delay","Notes"]];
+  ae.slice().sort((a,b)=>a.ts-b.ts).forEach(e=>{
+    rows.push([e.date,e.emp,e.job_name,e.phase_name,parseFloat(e.hrs).toFixed(1),tLabel(e.start_block),tLabel(e.end_block+1),e.entry_type||"work",e.weather_delay?"Yes":"No",e.notes||""]);
+  });
+  dlCSV(rows,"briker_hours_"+today()+".csv");
+}
+
+function exportBudget(){
+  const ae=allEntries();
+  const rows=[["Job","Phase","Budget Hrs","Actual Hrs","Variance","Contract Value"]];
+  DB.jobs.forEach(job=>{
+    (job.phases||[]).forEach(ph=>{
+      const act=sumH(ae.filter(e=>e.job_id===job.id&&e.phase_name===ph.name));
+      const v=ph.budget?(ph.budget-act).toFixed(1):"-";
+      rows.push([job.name,ph.name,ph.budget||0,act.toFixed(1),v,ph.contractVal?"$"+Number(ph.contractVal).toLocaleString():""]);
+    });
+  });
+  dlCSV(rows,"briker_budget_"+today()+".csv");
+}
+
+function dlCSV(rows,fname){
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  a.download=fname; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function changePin(){
+  const np=document.getElementById("new-pin").value;
+  const cp=document.getElementById("conf-pin").value;
+  const msg=document.getElementById("pin-msg");
+  if(!np){ msg.style.color="var(--red)"; msg.textContent="Enter a new PIN"; return; }
+  if(np!==cp){ msg.style.color="var(--red)"; msg.textContent="PINs do not match"; return; }
+  try{ const m=JSON.parse(localStorage.getItem(META_KEY)||"{}"); m.pin=np; localStorage.setItem(META_KEY,JSON.stringify(m)); }catch(e){}
+  msg.style.color="var(--green)"; msg.textContent="PIN updated";
+}
+
+// ── BOOT ────────────────────────────────────────────────────────
+window.addEventListener("online",  ()=>{ online=true;  setStatus(true);  syncQueue(); });
+window.addEventListener("offline", ()=>{ online=false; setStatus(false); });
+
+(async function boot(){
+  setStatus(online);
+  // Show cached data immediately if available
+  if(loadCache()){ fillHome(); }
+  try{
+    await loadAll();
+    await seed();
+    await loadAll();
+    fillHome();
+    setStatus(online);
+    document.getElementById("home-status-txt").textContent="Connected";
+    if(queue.length) syncQueue();
+  } catch(err){
+    console.error(err);
+    const s=document.getElementById("home-status");
+    const t=document.getElementById("home-status-txt");
+    if(s&&t){ s.className="status err"; t.textContent="Connection error — check internet"; }
+    if(!loadCache()){ if(s&&t){ t.textContent="No data — check internet connection"; } }
+    else{ fillHome(); }
+  }
+})();
+</script>
+</body>
+</html>
